@@ -79,8 +79,8 @@ const StyledControls = styled.section<{ open: boolean }>`
     transition: transform ${theme.controls.transition};
 
     ${(props) =>
-      props.open &&
-      css`
+    props.open &&
+    css`
         transform: none;
       `}
   }
@@ -166,13 +166,12 @@ const Controls: FC<{
         <PaletteControls />
 
         <ControlGroup title="Export">
-          <DownloadButton href={output} download="lowpoly.png">
+          <DownloadButton href={output.bitmap} download="lowpoly.png">
             Download PNG
           </DownloadButton>
-          <FileMetadata>
-            {getFileSize()} &bull; {settings.dimensions.width} &times;
-            {settings.dimensions.height}
-          </FileMetadata>
+          <DownloadButton href={output.svg} download="lowpoly.svg">
+            Download SVG
+          </DownloadButton>
         </ControlGroup>
 
         <Footer>

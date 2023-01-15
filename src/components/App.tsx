@@ -134,10 +134,11 @@ const App: FC = () => {
 
   /**
    * Updates the output dataURI in state
-   * @param {string} value The data URL for the generated canvas
+   * @param {string} bitmapUrl The data URL for the generated bitmap canvas
+   * @param {string} svgUrl    The data URL for the generated svg canvas
    */
-  const updateOutput = (value: string) => {
-    dispatch({ type: 'UPDATE_OUTPUT', payload: value });
+  const updateOutput = (bitmapUrl: string, svgUrl: string) => {
+    dispatch({ type: 'UPDATE_OUTPUT', payload: { bitmap: bitmapUrl, svg: svgUrl } });
   };
 
   return (

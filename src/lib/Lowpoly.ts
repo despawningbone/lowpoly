@@ -14,6 +14,8 @@ export default class Lowpoly {
 
   ctx: CanvasRenderingContext2D;
 
+  svg: CanvasRenderingContext2D;
+
   points: Vertex[];
 
   triangles: Triangle[];
@@ -50,9 +52,10 @@ export default class Lowpoly {
 
   PRNG: PRNG;
 
-  constructor(element: HTMLCanvasElement) {
-    this.element = element;
+  constructor(element: HTMLCanvasElement, svg: CanvasRenderingContext2D) {  //technically C2S but C2S has no ts decs
+    this.element = element as HTMLCanvasElement;
     this.ctx = this.element.getContext('2d');
+    this.svg = svg;
     this.points = [];
     this.triangles = [];
 
@@ -81,10 +84,11 @@ export default class Lowpoly {
     this.PRNG = new PRNG(this.seed);
 
     this.ctx.strokeStyle = '#fff';
+    this.svg.strokeStyle = '#fff';
+    this.svg.lineWidth = 0;
   }
 
-  drawTriangle(vertices: Vertex[]) {
-    const { ctx } = this;
+  drawTriangle(vertices: Vertex[], ctx: CanvasRenderingContext2D) {
     ctx.beginPath();
     ctx.moveTo(vertices[0].x, vertices[0].y);
     ctx.lineTo(vertices[1].x, vertices[1].y);
@@ -93,8 +97,8 @@ export default class Lowpoly {
     ctx.fill();
   }
 
-  drawBackground() {
-    const { ctx, element, colours } = this;
+  drawBackground(ctx: CanvasRenderingContext2D) {
+    const { element, colours } = this;
 
     ctx.clearRect(0, 0, element.width, element.height);
 
@@ -140,7 +144,9 @@ export default class Lowpoly {
     ctx.beginPath();
     ctx.fillRect(0, 0, element.width, element.height);
     ctx.closePath();
+    ctx.beginPath();
     ctx.fill();
+    ctx.closePath();
 
     // draw gradient overlay
     const overlay = ctx.createLinearGradient(0, 0, 0, element.height);
@@ -151,7 +157,9 @@ export default class Lowpoly {
     ctx.fillStyle = overlay;
     ctx.fillRect(0, 0, element.width, element.height);
     ctx.closePath();
+    ctx.beginPath();
     ctx.fill();
+    ctx.closePath();
     ctx.globalCompositeOperation = 'source-over';
 
     return new Promise<void>((resolve) => {
@@ -159,8 +167,8 @@ export default class Lowpoly {
     });
   }
 
-  drawPoly(tri: Triangle) {
-    const { element, ctx, dither } = this;
+  drawPoly(tri: Triangle, ctx: CanvasRenderingContext2D) {
+    const { element, dither } = this;
     const centre = tri.getCentre();
 
     const ditherX = (dither / 200) * element.width;
@@ -231,7 +239,7 @@ export default class Lowpoly {
     //   ${alpha / 255}
     // )`;
 
-    this.drawTriangle(tri.vertices);
+    this.drawTriangle(tri.vertices, ctx);
   }
 
   generatePoints() {
@@ -332,12 +340,13 @@ export default class Lowpoly {
     tracker.test(() => this.generatePoints(), 'generatePoints');
     tracker.test(() => this.generateTriangles(), 'generateTriangles');
 
-    const { element, ctx, triangles } = this;
+    const { element, ctx, svg, triangles } = this;
 
     ctx.clearRect(0, 0, element.width, element.height);
 
     // draw gradient/image on canvas and get image data
-    await tracker.test(() => this.drawBackground(), 'drawBackground', true);
+    await tracker.test(() => this.drawBackground(ctx), 'drawBackground', true);
+    await tracker.test(() => this.drawBackground(svg), 'drawBackground', true);
 
     tracker.test(() => {
       this.imageData = ctx.getImageData(
@@ -351,15 +360,17 @@ export default class Lowpoly {
     // draw polys on main canvas
     tracker.test(() => {
       for (let i = 0; i < triangles.length; i++) {
-        this.drawPoly(triangles[i]);
+        this.drawPoly(triangles[i], ctx);
+        this.drawPoly(triangles[i], svg);
       }
     }, 'drawPoly');
 
     // tracker.log();
 
-    // generate data url of image
-    this.dataUrl = element.toDataURL();
-
-    return this.dataUrl;
+    // return unserialized element; to avoid gaps between the shapes, 
+    // add `element.setAttribute("shape-rendering", 'crispEdges')` in __createElement in canvas2svg.js
+    // or manually iterate over all paths and add that attribute
+    return { bitmap: element, svg: svg };
   }
 }
+

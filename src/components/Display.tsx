@@ -5,6 +5,8 @@ import theme from '../data/theme';
 import Lowpoly from '../lib/Lowpoly';
 import { SettingsState } from '../data/defaults';
 import Loader from './Loader';
+import { Buffer } from 'buffer';
+let C2S = require('canvas2svg');
 
 const StyledDisplay = styled.div`
   text-align: center;
@@ -31,9 +33,9 @@ const Canvas = styled.canvas`
 
 const Display: FC<{
   settings: SettingsState;
-  updateOutput: (x: string) => void;
+  updateOutput: (bitmapUrl: string, svgUrl: string) => void;
 }> = ({ settings, updateOutput }) => {
-  const canvas = useRef(null);
+  const canvas = { bitmap: useRef(null), svg: useRef(null) };
   const lowpoly = useRef(null);
   const [loading, setLoading] = useState(false);
 
@@ -45,7 +47,7 @@ const Display: FC<{
   const drawCanvas = async () => {
     const { geometry, colour, image, useImage, seed } = settings;
 
-    const dataURL = await lowpoly.current.render({
+    let output = await lowpoly.current.render({
       variance: geometry.variance,
       cellSize: geometry.cellSize,
       depth: geometry.depth,
@@ -56,11 +58,11 @@ const Display: FC<{
       seed,
     });
 
-    updateOutput(dataURL);
+    updateOutput(output.bitmap.toDataURL(), "data:image/svg+xml;base64," + Buffer.from(output.svg.getSerializedSvg(true)).toString('base64'));
   };
 
   useEffect(() => {
-    lowpoly.current = new Lowpoly(canvas.current);
+    lowpoly.current = new Lowpoly(canvas.bitmap.current, canvas.svg.current);
   }, []);
 
   useEffect(() => {
@@ -80,10 +82,12 @@ const Display: FC<{
 
   const { width, height } = settings.dimensions;
 
+  canvas.svg.current = new C2S(width, height);
+
   return (
     <StyledDisplay>
       {loading ? <Loader /> : null}
-      <Canvas ref={canvas} width={width} height={height} />
+      <Canvas ref={canvas.bitmap} width={width} height={height} />
     </StyledDisplay>
   );
 };
