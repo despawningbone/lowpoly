@@ -106,6 +106,11 @@ const App: FC = () => {
               useImage: action.payload,
             },
           };
+        case 'IMPORT_SETTINGS':
+          return {
+            ...state2,
+            settings: action.payload,
+          };
         case 'UPDATE_OUTPUT':
           return {
             ...state2,

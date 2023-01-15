@@ -1,4 +1,4 @@
-import React, { FC, useContext } from 'react';
+import React, { ChangeEvent, FC, useContext, useRef } from 'react';
 import styled, { css } from 'styled-components';
 import * as Icon from 'react-feather';
 
@@ -87,6 +87,9 @@ const StyledControls = styled.section<{ open: boolean }>`
 `;
 
 const DownloadButton = styled(LinkButton)``;
+const CopyButton = styled(LinkButton)`
+  margin-bottom: 1em;
+`;
 
 const FileMetadata = styled.p`
   text-align: center;
@@ -130,8 +133,9 @@ const Controls: FC<{
   const kb = 1024;
   const mb = kb * kb;
 
-  const getFileSize = (raw = false) => {
-    const size = Math.round(((output.length - head.length) * 3) / 4);
+  const getFileSize = (serialized: string, raw = false) => {
+    if (!serialized) return ""
+    const size = Math.round(((serialized.length - head.length) * 3) / 4);
     if (raw) {
       return size;
     }
@@ -144,6 +148,16 @@ const Controls: FC<{
     }
     return `${size.toFixed(1)}B`;
   };
+
+  const settingsFile = useRef(null);
+
+  const getSettings = (e: ChangeEvent<HTMLInputElement>) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      dispatch({ type: 'IMPORT_SETTINGS', payload: JSON.parse(e.target.result as string) });
+    };
+    reader.readAsText(e.target.files[0]);
+  }
 
   return (
     <Container className={className}>
@@ -165,13 +179,26 @@ const Controls: FC<{
         <ColourControls />
         <PaletteControls />
 
-        <ControlGroup title="Export">
+        <ControlGroup title="Import/Export">
+          <CopyButton onClick={() => navigator.clipboard.writeText(JSON.stringify(settings))}>
+            Export settings to clipboard
+          </CopyButton>
+          <input type='file' id='file' ref={settingsFile} style={{ display: 'none' }} onChange={getSettings} />
+          <CopyButton onClick={() => settingsFile.current.click()}>
+            Import settings from file
+          </CopyButton>
           <DownloadButton href={output.bitmap} download="lowpoly.png">
             Download PNG
           </DownloadButton>
+          <FileMetadata>
+            {getFileSize(output.bitmap)} &bull; {settings.dimensions.width} &times; {settings.dimensions.height}
+          </FileMetadata>
           <DownloadButton href={output.svg} download="lowpoly.svg">
             Download SVG
           </DownloadButton>
+          <FileMetadata>
+            {getFileSize(output.svg)} &bull; {settings.dimensions.width} &times; {settings.dimensions.height}
+          </FileMetadata>
         </ControlGroup>
 
         <Footer>
