@@ -106,6 +106,7 @@ const App: FC = () => {
               useImage: action.payload,
             },
           };
+        //TODO update control panel ui
         case 'IMPORT_SETTINGS':
           return {
             ...state2,
@@ -135,8 +136,6 @@ const App: FC = () => {
     }
   );
 
-  const { settings, output } = state;
-
   /**
    * Updates the output dataURI in state
    * @param {string} bitmapUrl The data URL for the generated bitmap canvas
@@ -153,8 +152,8 @@ const App: FC = () => {
           <GlobalStyles />
           {state.settings ? (
             <>
-              <Display settings={settings} updateOutput={updateOutput} />
-              <Controls output={output} open={state.controlsOpen} />
+              <Display settings={state.settings} updateOutput={updateOutput} />
+              <Controls output={state.output} open={state.controlsOpen} />
             </>
           ) : null}
         </Container>

@@ -6,7 +6,6 @@ import Lowpoly from '../lib/Lowpoly';
 import { SettingsState } from '../data/defaults';
 import Loader from './Loader';
 import { Buffer } from 'buffer';
-let C2S = require('canvas2svg');
 
 const StyledDisplay = styled.div`
   text-align: center;
@@ -35,7 +34,7 @@ const Display: FC<{
   settings: SettingsState;
   updateOutput: (bitmapUrl: string, svgUrl: string) => void;
 }> = ({ settings, updateOutput }) => {
-  const canvas = { bitmap: useRef(null), svg: useRef(null) };
+  const canvas = useRef(null);
   const lowpoly = useRef(null);
   const [loading, setLoading] = useState(false);
 
@@ -62,7 +61,7 @@ const Display: FC<{
   };
 
   useEffect(() => {
-    lowpoly.current = new Lowpoly(canvas.bitmap.current, canvas.svg.current);
+    lowpoly.current = new Lowpoly(canvas.current);
   }, []);
 
   useEffect(() => {
@@ -82,12 +81,10 @@ const Display: FC<{
 
   const { width, height } = settings.dimensions;
 
-  canvas.svg.current = new C2S(width, height);
-
   return (
     <StyledDisplay>
       {loading ? <Loader /> : null}
-      <Canvas ref={canvas.bitmap} width={width} height={height} />
+      <Canvas ref={canvas} width={width} height={height} />
     </StyledDisplay>
   );
 };

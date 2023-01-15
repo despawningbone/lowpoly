@@ -9,12 +9,14 @@ import Tracker from './Tracker';
 import Vector from './Vector';
 import Vertex from './Vertex';
 
+let C2S = require('canvas2svg');
+
 export default class Lowpoly {
   element: HTMLCanvasElement;
 
   ctx: CanvasRenderingContext2D;
 
-  svg: CanvasRenderingContext2D;
+  svg: CanvasRenderingContext2D; //technically C2S but C2S has no ts decs
 
   points: Vertex[];
 
@@ -52,10 +54,9 @@ export default class Lowpoly {
 
   PRNG: PRNG;
 
-  constructor(element: HTMLCanvasElement, svg: CanvasRenderingContext2D) {  //technically C2S but C2S has no ts decs
+  constructor(element: HTMLCanvasElement) {
     this.element = element as HTMLCanvasElement;
     this.ctx = this.element.getContext('2d');
-    this.svg = svg;
     this.points = [];
     this.triangles = [];
 
@@ -84,8 +85,6 @@ export default class Lowpoly {
     this.PRNG = new PRNG(this.seed);
 
     this.ctx.strokeStyle = '#fff';
-    this.svg.strokeStyle = '#fff';
-    this.svg.lineWidth = 0;
   }
 
   drawTriangle(vertices: Vertex[], ctx: CanvasRenderingContext2D) {
@@ -324,6 +323,11 @@ export default class Lowpoly {
   }) {
     await wait(0);
     Object.assign(this, options);
+
+    //initialize a new svg canvas, since element dimensions might have changed (and clearRect on the same canvas bloats the svg eventually)
+    this.svg = new C2S(this.element.width, this.element.height);
+    this.svg.strokeStyle = '#fff';
+    this.svg.lineWidth = 0;
 
     this.PRNG.reset(this.seed);
     const tracker = new Tracker();
